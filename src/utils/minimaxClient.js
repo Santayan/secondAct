@@ -1,7 +1,7 @@
-const MINIMAX_API_KEY = import.meta.env.VITE_MINIMAX_API_KEY;
-const MINIMAX_API_BASE = import.meta.env.VITE_MINIMAX_API_BASE || "https://api.minimax.io/v1";
-const MINIMAX_MODEL = import.meta.env.VITE_MINIMAX_MODEL || "MiniMax-M2.5";
-const MINIMAX_API_URL = `${MINIMAX_API_BASE}/text/chatcompletion_v2`;
+// All AI requests are proxied through /api/minimax (Vercel serverless function).
+// The real API key lives server-side only — never in the browser bundle.
+const MINIMAX_PROXY_URL = '/api/minimax';
+const MINIMAX_MODEL = import.meta.env.VITE_MINIMAX_MODEL || 'MiniMax-M2.5';
 
 // ── Diverse name pool ──────────────────────────────────────────
 const FIRST_NAMES = [
@@ -41,10 +41,6 @@ function pickRandomNames(count) {
 // ──────────────────────────────────────────────────────────────
 
 export const generateAIMentors = async (originIndustry, targetIndustry, yearsExperience) => {
-    if (!MINIMAX_API_KEY || MINIMAX_API_KEY === 'YOUR_MINIMAX_API_KEY_HERE') {
-        console.warn("Minimax API Key missing.");
-        return [];
-    }
 
     const names = pickRandomNames(3);
     const nameList = names.map((n, i) => `Mentor ${i + 1}: ${n.firstName} ${n.lastName}`).join(', ');
@@ -63,12 +59,9 @@ Each object must have:
 - "avatar": A single letter string (their first initial).`;
 
     try {
-        const response = await fetch(MINIMAX_API_URL, {
+        const response = await fetch(MINIMAX_PROXY_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${MINIMAX_API_KEY}`
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: MINIMAX_MODEL,
                 messages: [
@@ -99,9 +92,6 @@ Each object must have:
 };
 
 export const generateCareerGuide = async (originIndustry, targetIndustry, yearsExperience) => {
-    if (!MINIMAX_API_KEY || MINIMAX_API_KEY === 'YOUR_MINIMAX_API_KEY_HERE') {
-        return null;
-    }
 
     const prompt = `You are an expert career coach specialising in mid-career transitions.
 
@@ -126,12 +116,9 @@ Structure the guide with these exact sections using markdown:
 Keep the tone warm, direct, and encouraging. Write 600–800 words total. Do not mention that you are an AI.`;
 
     try {
-        const response = await fetch(MINIMAX_API_URL, {
+        const response = await fetch(MINIMAX_PROXY_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${MINIMAX_API_KEY}`
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: MINIMAX_MODEL,
                 messages: [
@@ -149,9 +136,6 @@ Keep the tone warm, direct, and encouraging. Write 600–800 words total. Do not
 };
 
 export const chatWithAIMentor = async (mentorProfile, menteeProfile, chatHistory) => {
-    if (!MINIMAX_API_KEY || MINIMAX_API_KEY === 'YOUR_MINIMAX_API_KEY_HERE') {
-        return "Minimax API Key is not configured correctly.";
-    }
 
     const systemPrompt = `You are ${mentorProfile.firstName} ${mentorProfile.lastName}, a ${mentorProfile.jobTitle} at ${mentorProfile.company}. You successfully pivoted from ${menteeProfile.originIndustry} to ${menteeProfile.targetIndustry}. You are talking to a mentee making the same pivot. Speak eagerly, professionally, and draw on your simulated experience to give them actionable advice. Keep responses concise and human-like.`;
 
@@ -168,12 +152,9 @@ export const chatWithAIMentor = async (mentorProfile, menteeProfile, chatHistory
     }
 
     try {
-        const response = await fetch(MINIMAX_API_URL, {
+        const response = await fetch(MINIMAX_PROXY_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${MINIMAX_API_KEY}`
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: MINIMAX_MODEL,
                 messages: messages
